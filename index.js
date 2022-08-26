@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const AdultsBook = require('./Routes/AdultsBook');
 const KidsBook = require('./Routes/KidsBook');
 const cors = require('cors');
-
+const user = require('./Routes/user');
 
 mongoose.connect('mongodb://localhost/Books-directory')
 .then(()=>{console.log('Connect to MongoDB')})
@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(cors({
     origin: "http://localhost:3000"
 }));
+app.use('/api/user',user);
 app.use('/api/AdultsBook',AdultsBook);
 app.use('/api/KidsBook',KidsBook);
 
