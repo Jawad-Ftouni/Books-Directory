@@ -1,7 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require('mongoose');
+const LocalStrategy = require('passport-local');
+const passport = require('passport');
 
+passport.use(new LocalStrategy((userName,pwd,done)=>{
+
+    User.findOne({userName: userName},(err, user)=>{
+        if(err){ return done(err); }
+        if(!user){ return done(null, false) }
+        if(!user.verifyPassword(pwd)) {return done(null,false);}
+        return done(null, user)
+    })
+
+}))
 
 const userschema = new mongoose.Schema({
     userName:{
@@ -17,17 +29,28 @@ const userschema = new mongoose.Schema({
 
 const User = mongoose.model("User",userschema);
 
-router.post('/', async(req,res)=>{
-    const user = new User({
+router.post('/login', async(req,res)=>{
+passport.authenticate('local',{ failureRedirect: 'login' }),(req,res)=>{
+    res.redirect('/');
+}
+
+})
+router.post('/register', async(req,res)=>{
+
+    
+
+
+     user = new User({
         userName: req.body.userName,
         pwd: req.body.pwd
-    })
+     });
+
     if(!user)
     console.log('user')
-    const result = await user.save();
-    console.log(result);
+     await user.save();
     res.send(user);
 })
+
 
 router.get('/',async(req,res)=>{
     const users =  await User.find();
