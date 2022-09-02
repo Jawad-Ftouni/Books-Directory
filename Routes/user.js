@@ -1,19 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require('mongoose');
-const LocalStrategy = require('passport-local');
 const passport = require('passport');
+const bcrypt = require('bcrypt');
+const flash = require('connect-flash');
+const session = require('express-session');
+const initializePassport = require('../passport-config')
 
-passport.use(new LocalStrategy((userName,pwd,done)=>{
-
-    User.findOne({userName: userName},(err, user)=>{
-        if(err){ return done(err); }
-        if(!user){ return done(null, false) }
-        if(!user.verifyPassword(pwd)) {return done(null,false);}
-        return done(null, user)
-    })
-
+router.use(flash());
+router.use(session({
+    secret: process.env.SESSION_SECRET,
+    rasave: false,
+    saveUninitialized: false
 }))
+
+router.use(passport.initialize())
+router.use(passport.session())
+
+initializePassport(
+    passport,
+    (userName) => {
+    return User.find(user => user.userName === userName)
+})
+
+
 
 const userschema = new mongoose.Schema({
     userName:{
@@ -24,32 +34,32 @@ const userschema = new mongoose.Schema({
     pwd:{
         type:String,
         required:[true,"password required"]
-    }
+    },
+      token: { type: String }
+
 })
 
 const User = mongoose.model("User",userschema);
 
-router.post('/login', async(req,res)=>{
-passport.authenticate('local',{ failureRedirect: 'login' }),(req,res)=>{
-    res.redirect('/');
-}
-
+router.post('/register',async(req,res)=>{
+    try{
+        const hashedPassword = await bcrypt.hash(req.body.pwd, 10)
+        
+        const user = new User({
+            userName: req.body.userName,
+            pwd: hashedPassword
+        })
+        res.redirect('/login')
+    } catch{
+        res.redirect('/register')
+    }
 })
-router.post('/register', async(req,res)=>{
 
-    
-
-
-     user = new User({
-        userName: req.body.userName,
-        pwd: req.body.pwd
-     });
-
-    if(!user)
-    console.log('user')
-     await user.save();
-    res.send(user);
-})
+router.post('/login',passport.authenticate('local',{
+    successRedirect: '/',
+    failerRedirect: 'login',
+    failerFlash: true
+}))
 
 
 router.get('/',async(req,res)=>{
@@ -59,4 +69,4 @@ router.get('/',async(req,res)=>{
     res.send(users);
 })
 
-module.exports = router;
+module.exports = mongoose.model("user", userschema);

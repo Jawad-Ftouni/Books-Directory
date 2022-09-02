@@ -5,8 +5,13 @@ const AdultsBook = require('./Routes/AdultsBook');
 const KidsBook = require('./Routes/KidsBook');
 const cors = require('cors');
 const user = require('./Routes/user');
+require('dotenv').config();
+const  {MONGO_URI}  = process.env;
+const {PORT} = process.env;
 
-mongoose.connect('mongodb://localhost/Books-directory')
+const port = process.env.PORT|| PORT;
+
+mongoose.connect(MONGO_URI)
 .then(()=>{console.log('Connect to MongoDB')})
 .catch((err)=>{console.log(err)});
 
@@ -19,6 +24,5 @@ app.use('/api/AdultsBook',AdultsBook);
 app.use('/api/KidsBook',KidsBook);
 
 
-const PORT = 3001;
-app.listen(PORT,()=>{console.log("Connected to server of PORT :"+PORT)});
+app.listen(port, ()=>{console.log("Connected to server of PORT :"+port)});
 
