@@ -10,8 +10,8 @@ require('dotenv').config()
 const app = express();
 const jwt = require('jsonwebtoken');
 const compareHash = require('../middleware/compareHashPwd');
-passport.serializeUser((user, done)=>done(null,user));
-passport.deserializeUser((user, done)=>done(null,user));
+passport.serializeUser((user, done)=>done(null,user));//write or save user into a session
+passport.deserializeUser((user, done)=>done(null,user));// read user from a session  
 
 // app.use(flash());//middleware
 app.use(session({
@@ -43,12 +43,11 @@ passport.use(new LocalStrategy.Strategy({usernameField: 'userName',session:true}
   async(userName, password, done)=>{
     try{
         const userFound = await User.findOne({userName: userName});
-        console.log(password,userFound.password)
+        if(!userFound){console.log("user not found")}
         if(userFound && compareHash(password,userFound.password)){
           done(null, userFound);
-          console.log("succeed")
           }else {
-            done(null,false);
+            done(null, false,{message:'user doesnt exist'});//status 401 text of unauthorized message isnt working
           }
         
     }catch(error) {
@@ -71,8 +70,8 @@ router.post('/register',async(req,res)=>{
         await user.save();
         res.send(user)
         console.log(user)
-    } catch{
-        res.redirect('/register')
+    } catch(error){
+        console.log(error)
     }
 })
 
@@ -82,7 +81,6 @@ router.post('/register',async(req,res)=>{
 
 router.post('/login',passport.authenticate('local') ,async(req,res)=>{
   try{
-    console.log(req.user.id,req.user.userName)
      const token = jwt.sign(
             { user_id: req.user.id, userName:req.user.userName, role:1 },
             process.env.TOKEN_KEY,

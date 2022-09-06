@@ -10,7 +10,7 @@ const  {MONGO_URI}  = process.env;
 const {PORT} = process.env;
 var session = require('express-session');
 const passport = require("passport");
-
+const admin = require('./Routes/admin')
 const port = process.env.PORT|| PORT;
 
 mongoose.connect(MONGO_URI)
@@ -31,6 +31,7 @@ app.use(cors({
 app.use('/api/user',user);
 app.use('/api/AdultsBook',AdultsBook);
 app.use('/api/KidsBook',KidsBook);
+app.use('/api/admin',admin)
 
 
 app.listen(port, ()=>{console.log("Connected to server of PORT :"+port)});
